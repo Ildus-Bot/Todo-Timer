@@ -1,54 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import './TasksFilter.css';
 
-export default class TasksFilter extends React.Component {
-  static defaultProps = {
-    filterList: () => {},
-  };
+const TasksFilter = ({ filterList }) => {
+  const [selectedButton, setSelectedButton] = useState('all');
 
-  state = {
-    all: 'selected',
-    active: '',
-    completed: '',
-  };
-
-  filterTaskList = (e) => {
-    this.props.filterList(e.target.innerText);
-    this.changeSelectedButton(e.target.innerText);
-  };
-
-  changeSelectedButton = (textButton) => {
-    this.setState({
-      all: '',
-      active: '',
-      completed: '',
-    });
-
-    this.setState({
-      [textButton.toLowerCase()]: 'selected',
-    });
-  };
-
-  render() {
-    return (
-      <ul className="filters">
-        <li>
-          <button type="button" className={this.state.all} onClick={this.filterTaskList}>
-            All
-          </button>
-        </li>
-        <li>
-          <button type="button" className={this.state.active} onClick={this.filterTaskList}>
-            Active
-          </button>
-        </li>
-        <li>
-          <button type="button" className={this.state.completed} onClick={this.filterTaskList}>
-            Completed
-          </button>
-        </li>
-      </ul>
-    );
+  function filterTaskList(e) {
+    filterList(e.target.innerText);
+    changeSelectedButton(e.target.innerText);
   }
-}
+
+  function changeSelectedButton(textButton) {
+    setSelectedButton(textButton.toLowerCase());
+  }
+
+  return (
+    <ul className="filters">
+      <li>
+        <button type="button" className={selectedButton === 'all' ? 'selected' : null} onClick={filterTaskList}>
+          All
+        </button>
+      </li>
+      <li>
+        <button type="button" className={selectedButton === 'active' ? 'selected' : null} onClick={filterTaskList}>
+          Active
+        </button>
+      </li>
+      <li>
+        <button type="button" className={selectedButton === 'completed' ? 'selected' : null} onClick={filterTaskList}>
+          Completed
+        </button>
+      </li>
+    </ul>
+  );
+};
+
+export default TasksFilter;

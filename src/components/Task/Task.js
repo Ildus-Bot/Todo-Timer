@@ -1,162 +1,147 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 
 import './Task.css';
 
-export default class Task extends React.Component {
-  static defaultProps = {
-    onChangeTaskItem: () => {},
-    onDeleteTaskItem: () => {},
-  };
+const Task = ({ todoList, onChangeTaskItem, onDeleteTaskItem }) => {
+  let drawingAccess = todoList.className === 'editing';
 
-  static propTypes = {
-    todoList: (props, propName, componentName) => {
-      const valueProps = props[propName];
+  const [value, setValue] = useState(todoList.description);
+  const [minutes, setMinutes] = useState(todoList.minutes === 0 ? null : todoList.minutes);
+  const [seconds, setSeconds] = useState(todoList.seconds === 0 ? null : todoList.seconds);
+  const [idInterval, setIdInterval] = useState('');
+  const [isAccessToStartTimer, setIsAccessToStartTimer] = useState(false);
 
-      if (typeof valueProps === 'object') {
-        return null;
+  //************************************************************************************************************************************************************
+  useEffect(() => {
+    if (!isAccessToStartTimer) {
+      return;
+    }
+
+    if ((minutes === 0 || minutes === null) && seconds <= 0) {
+      setMinutes(null);
+      setSeconds(null);
+      clearInterval(idInterval);
+      return;
+    }
+
+    if (minutes > 0 && seconds <= 0) {
+      setMinutes((prevMinutes) => prevMinutes - 1);
+      setSeconds(59);
+      return;
+    }
+  });
+
+  useEffect(() => {
+    return () => {
+      if (idInterval) {
+        clearInterval(idInterval);
       }
+    };
+  }, []);
+  //************************************************************************************************************************************************************
 
-      return new TypeError(`${componentName} must be object`);
-    },
+  const timer = () => {
+    setSeconds((prevSecond) => prevSecond - 1);
   };
 
-  drawingAccess = this.props.todoList.className === 'editing' ? true : false;
-
-  state = {
-    value: this.props.todoList.description,
-    minutes: this.props.todoList.minutes === 0 ? null : this.props.todoList.minutes,
-    seconds: this.props.todoList.seconds === 0 ? null : this.props.todoList.seconds,
-    idInterval: '',
-  };
-
-  componentWillUnmount() {
-    if (this.state.idInterval) {
-      clearInterval(this.state.idInterval);
-    }
-  }
-
-  timer = () => {
-    if (this.state.minutes === 0 && this.state.seconds === 0) {
-      clearInterval(this.state.idInterval);
+  const handlerPlay = (e) => {
+    if (e.target.className !== 'icon icon-play') {
       return;
     }
 
-    if (this.state.seconds > 0) {
-      this.setState((prevState) => {
-        return {
-          seconds: prevState.seconds - 1,
-        };
-      });
-      return;
-    }
-
-    if (this.state.minutes > 0) {
-      this.setState((prevState) => {
-        return {
-          minutes: prevState.minutes - 1,
-          seconds: 59,
-        };
-      });
-      return;
+    if (!idInterval) {
+      setIsAccessToStartTimer(true);
+      setIdInterval(setInterval(() => timer(), 1000));
     }
   };
 
-  handlerPlay = () => {
-    if (!this.state.idInterval) {
-      const idInterval = setInterval(() => {
-        this.timer();
-      }, 1000);
-      this.setState({
-        idInterval,
-      });
+  const handlerPause = () => {
+    setIsAccessToStartTimer(false);
+    clearInterval(idInterval);
+    setIdInterval('');
+  };
+
+  const onLabelClick = () => {
+    onChangeTaskItem(todoList.id);
+  };
+
+  const onLabelClickDestroy = () => {
+    onDeleteTaskItem(todoList.id);
+    clearInterval(idInterval);
+  };
+
+  const changeRenderingData = (isEditing = true) => {
+    if (idInterval) {
+      clearInterval(idInterval);
+      setIdInterval('');
     }
+
+    drawingAccess = !drawingAccess;
+    onChangeTaskItem(todoList.id, isEditing);
   };
 
-  handlerPause = () => {
-    clearInterval(this.state.idInterval);
-    this.setState({ idInterval: '' });
-  };
-
-  onLabelClick = () => {
-    this.props.onChangeTaskItem(this.props.todoList.id);
-  };
-
-  onLabelClickDestroy = () => {
-    this.props.onDeleteTaskItem(this.props.todoList.id);
-  };
-
-  changeRenderingData = (isEditing = true) => {
-    if (this.state.idInterval) {
-      clearInterval(this.state.idInterval);
-      this.setState({
-        idInterval: '',
-      });
-    }
-    this.drawingAccess = !this.drawingAccess;
-    this.props.onChangeTaskItem(this.props.todoList.id, isEditing);
-  };
-
-  changeDescription = (e) => {
+  const changeDescription = (e) => {
     if (e.key === 'Enter') {
-      this.props.onChangeTaskItem(this.props.todoList.id, true, this.state.value);
-      this.setState({
-        value: '',
-      });
+      onChangeTaskItem(todoList.id, true, value);
+      setValue('');
 
-      this.changeRenderingData(false);
+      changeRenderingData(false);
     }
   };
 
-  changeValue = (e) => {
-    this.setState({
-      value: e.target.value,
-    });
-  };
+  const changeValue = (e) => setValue(e.target.value);
 
-  render() {
-    const createdAgo = `created ${formatDistanceToNow(this.props.todoList.dateOfCreation)} ago`;
-    const { todoList } = this.props;
-    let { minutes, seconds } = this.state;
+  const createdAgo = `created ${formatDistanceToNow(todoList.dateOfCreation)} ago`;
 
-    if (minutes || seconds) {
-      minutes = minutes ? minutes : 0;
-      seconds = seconds ? seconds : 0;
-    }
+  let localMinutes;
+  let localSeconds;
 
-    return (
-      <div>
-        <div className="view">
-          <input
-            className="toggle"
-            onClick={this.onLabelClick}
-            defaultChecked={todoList.className === 'completed' ? true : false}
-            type="checkbox"
-          />
-          <label>
-            <span className="title" onClick={this.onLabelClick}>
-              {todoList.description}
-            </span>
-            <span className={minutes !== null || seconds !== null ? 'description' : 'hidden'}>
-              <button className="icon icon-play" onClick={this.handlerPlay}></button>
-              <button className="icon icon-pause" onClick={this.handlerPause}></button>
-              {`${minutes}:${seconds}`}
-            </span>
-            <span className="description">{createdAgo}</span>
-          </label>
-          <button className="icon icon-edit" onClick={this.changeRenderingData}></button>
-          <button className="icon icon-destroy" onClick={this.onLabelClickDestroy}></button>
-        </div>
-        {this.drawingAccess && (
-          <input
-            type="text"
-            className="edit"
-            value={this.state.value}
-            onChange={this.changeValue}
-            onKeyPress={this.changeDescription}
-          />
-        )}
-      </div>
-    );
+  if (minutes || seconds) {
+    localMinutes = minutes ? minutes : 0;
+    localSeconds = seconds ? seconds : 0;
   }
-}
+
+  return (
+    <div>
+      <div className="view">
+        <input
+          className="toggle"
+          onChange={onLabelClick}
+          checked={todoList.className === 'completed' ? true : false}
+          type="checkbox"
+        />
+        <label>
+          <span className="title" onClick={onLabelClick}>
+            {todoList.description}
+          </span>
+          <span className={minutes !== null || seconds !== null ? 'description' : 'hidden'}>
+            <button className="icon icon-play" onClick={handlerPlay}></button>
+            <button className="icon icon-pause" onClick={handlerPause}></button>
+            {`${localMinutes}:${localSeconds}`}
+          </span>
+          <span className="description">{createdAgo}</span>
+        </label>
+        <button className="icon icon-edit" onClick={changeRenderingData}></button>
+        <button className="icon icon-destroy" onClick={onLabelClickDestroy}></button>
+      </div>
+      {drawingAccess && (
+        <input type="text" className="edit" value={value} onChange={changeValue} onKeyPress={changeDescription} />
+      )}
+    </div>
+  );
+};
+
+Task.propTypes = {
+  todoList: (props, propName, componentName) => {
+    const valueProps = props[propName];
+
+    if (typeof valueProps === 'object') {
+      return null;
+    }
+
+    return new TypeError(`${componentName} must be object`);
+  },
+};
+
+export default Task;
