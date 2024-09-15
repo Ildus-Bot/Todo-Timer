@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import './App.css';
 
@@ -9,186 +9,168 @@ import TasksFilter from '../TasksFilter';
 import CleareCompleted from '../CleareCompleted';
 import CounterOfUnfinishedTasks from '../CounterOfUnfinishedTasks';
 
-export default class App extends React.Component {
-  constructor() {
-    super();
+export default function App() {
+  const [tasks, setTasks] = useState([
+    {
+      className: 'completed',
+      description: 'Completed task',
+      id: 1,
+      isHidden: false,
+      minutes: 0,
+      seconds: 0,
+      dateOfCreation: new Date('June 25, 2024 23:15:30'),
+    },
+    {
+      className: 'editing',
+      description: 'Editing task',
+      id: 2,
+      isHidden: false,
+      minutes: 0,
+      seconds: 0,
+      dateOfCreation: new Date('June 26, 2024 16:14:11'),
+    },
+    {
+      className: '',
+      description: 'Active task',
+      id: 3,
+      isHidden: false,
+      minutes: '3',
+      seconds: '34',
+      dateOfCreation: new Date('June 27, 2024 13:00:00'),
+    },
+  ]);
 
-    this.id = 100;
+  const [id, setId] = useState(100);
 
-    this.state = {
-      tasks: [
-        {
-          className: 'completed',
-          description: 'Completed task',
-          id: 1,
-          isHidden: false,
-          minutes: 0,
-          seconds: 0,
-          dateOfCreation: new Date('June 25, 2024 23:15:30'),
-        },
-        {
-          className: 'editing',
-          description: 'Editing task',
-          id: 2,
-          isHidden: false,
-          minutes: 0,
-          seconds: 0,
-          dateOfCreation: new Date('June 26, 2024 16:14:11'),
-        },
-        {
-          className: '',
-          description: 'Active task',
-          id: 3,
-          isHidden: false,
-          minutes: '3',
-          seconds: '34',
-          dateOfCreation: new Date('June 27, 2024 13:00:00'),
-        },
-      ],
-    };
+  const changeTaskItem = (id, isEditing = false, description = '') => {
+    setTasks((tasks) => {
+      const idx = tasks.findIndex((el) => el.id === id);
+      let newItem;
 
-    this.changeTaskItem = (id, isEditing = false, description = '') => {
-      this.setState(({ tasks }) => {
-        const idx = tasks.findIndex((el) => el.id === id);
-        let newItem;
-
-        if (!isEditing) {
-          if (tasks[idx].className === 'completed') {
-            newItem = { ...tasks[idx], className: '' };
-          }
-
-          if (!tasks[idx].className) {
-            newItem = { ...tasks[idx], className: 'completed' };
-          }
-
-          if (tasks[idx].className === 'editing') {
-            newItem = { ...tasks[idx], className: '' };
-          }
-        } else if (!description) {
-          newItem = { ...tasks[idx], className: 'editing' };
-        } else {
-          newItem = { ...tasks[idx], description };
+      if (!isEditing) {
+        if (tasks[idx].className === 'completed') {
+          newItem = { ...tasks[idx], className: '' };
         }
 
-        const newArray = [...tasks.slice(0, idx), newItem, ...tasks.slice(idx + 1)];
-
-        return {
-          tasks: newArray,
-        };
-      });
-    };
-
-    this.deleteTaskItem = (id) => {
-      this.setState(({ tasks }) => {
-        const idx = tasks.findIndex((el) => el.id === id);
-
-        const newArray = [...tasks.slice(0, idx), ...tasks.slice(idx + 1)];
-
-        return {
-          tasks: newArray,
-        };
-      });
-    };
-
-    this.createTaskItem = (text, minutes, seconds) => {
-      const newTask = {
-        className: '',
-        description: text,
-        id: this.id++,
-        minutes: minutes,
-        seconds: seconds,
-        isHidden: false,
-        dateOfCreation: new Date(),
-      };
-
-      return newTask;
-    };
-
-    this.addTaskItem = (text, minutes, seconds) => {
-      const newObject = [...this.state.tasks, this.createTaskItem(text, minutes, seconds)];
-
-      this.setState({
-        tasks: newObject,
-      });
-    };
-
-    this.changeTaskList = (typeOfFilter) => {
-      this.setState(({ tasks }) => ({
-        tasks: this.createFilteredArray(typeOfFilter, tasks),
-      }));
-    };
-
-    this.createFilteredArray = (typeOfFilter, tasks) => {
-      const newFilteredArray = [];
-
-      tasks.map((task) => {
-        if (typeOfFilter.toLowerCase() === 'completed') {
-          if (task.className === typeOfFilter.toLowerCase()) {
-            newFilteredArray.push({ ...task, isHidden: false });
-          } else {
-            newFilteredArray.push({ ...task, isHidden: true });
-          }
+        if (!tasks[idx].className) {
+          newItem = { ...tasks[idx], className: 'completed' };
         }
 
-        if (typeOfFilter.toLowerCase() === 'active') {
-          if (task.className === '') {
-            newFilteredArray.push({ ...task, isHidden: false });
-          } else {
-            newFilteredArray.push({ ...task, isHidden: true });
-          }
+        if (tasks[idx].className === 'editing') {
+          newItem = { ...tasks[idx], className: '' };
         }
+      } else if (!description) {
+        newItem = { ...tasks[idx], className: 'editing' };
+      } else {
+        newItem = { ...tasks[idx], description };
+      }
 
-        if (typeOfFilter.toLowerCase() === 'all') {
+      const newArray = [...tasks.slice(0, idx), newItem, ...tasks.slice(idx + 1)];
+
+      return newArray;
+    });
+  };
+
+  const deleteTaskItem = (id) => {
+    setTasks((tasks) => {
+      const idx = tasks.findIndex((el) => el.id === id);
+
+      const newArray = [...tasks.slice(0, idx), ...tasks.slice(idx + 1)];
+
+      return newArray;
+    });
+  };
+
+  const createTaskItem = (text, minutes, seconds) => {
+    setId((id) => id + 1);
+
+    const newTask = {
+      className: '',
+      description: text,
+      id: id,
+      minutes: minutes,
+      seconds: seconds,
+      isHidden: false,
+      dateOfCreation: new Date(),
+    };
+
+    return newTask;
+  };
+
+  const addTaskItem = (text, minutes, seconds) => {
+    const newObject = [...tasks, createTaskItem(text, minutes, seconds)];
+
+    setTasks(newObject);
+  };
+
+  const changeTaskList = (typeOfFilter) => {
+    setTasks((tasks) => createFilteredArray(typeOfFilter, tasks));
+  };
+
+  const createFilteredArray = (typeOfFilter, tasks) => {
+    const newFilteredArray = [];
+
+    tasks.map((task) => {
+      if (typeOfFilter.toLowerCase() === 'completed') {
+        if (task.className === typeOfFilter.toLowerCase()) {
           newFilteredArray.push({ ...task, isHidden: false });
+        } else {
+          newFilteredArray.push({ ...task, isHidden: true });
         }
-      });
+      }
 
-      return newFilteredArray;
-    };
-
-    this.deleteCompletedTasks = () => {
-      this.state.tasks.map((task) => {
-        if (task.className === 'completed') {
-          this.deleteTaskItem(task.id);
+      if (typeOfFilter.toLowerCase() === 'active') {
+        if (task.className === '') {
+          newFilteredArray.push({ ...task, isHidden: false });
+        } else {
+          newFilteredArray.push({ ...task, isHidden: true });
         }
-      });
-    };
+      }
 
-    this.getCountOfUnfinishedTasks = () => {
-      let count = 0;
+      if (typeOfFilter.toLowerCase() === 'all') {
+        newFilteredArray.push({ ...task, isHidden: false });
+      }
+    });
 
-      this.state.tasks.map((task) => {
-        if (task.className !== 'completed') {
-          count++;
-        }
-      });
+    return newFilteredArray;
+  };
 
-      return count;
-    };
-  }
+  const deleteCompletedTasks = () => {
+    tasks.map((task) => {
+      if (task.className === 'completed') {
+        deleteTaskItem(task.id);
+      }
+    });
+  };
 
-  render() {
-    return (
-      <section className="todoapp">
-        <header className="header">
-          <Header />
-          <NewTaskForm addTaskItem={this.addTaskItem} />
-        </header>
+  const getCountOfUnfinishedTasks = () => {
+    let count = 0;
 
-        <section className="main">
-          <TaskList
-            todoList={this.state.tasks}
-            onChangeTaskItem={this.changeTaskItem}
-            onDeleteTaskItem={this.deleteTaskItem}
-          />
+    tasks.map((task) => {
+      if (task.className !== 'completed') {
+        count++;
+      }
+    });
 
-          <footer className="footer">
-            <CounterOfUnfinishedTasks countOfUnfinishedTasks={this.getCountOfUnfinishedTasks} />
-            <TasksFilter filterList={this.changeTaskList} />
-            <CleareCompleted cleareCompletedTasks={this.deleteCompletedTasks} />
-          </footer>
-        </section>
+    return count;
+  };
+
+  return (
+    <section className="todoapp">
+      <header className="header">
+        <Header />
+        <NewTaskForm addTaskItem={addTaskItem} />
+      </header>
+
+      <section className="main">
+        <TaskList todoList={tasks} onChangeTaskItem={changeTaskItem} onDeleteTaskItem={deleteTaskItem} />
+
+        <footer className="footer">
+          <CounterOfUnfinishedTasks countOfUnfinishedTasks={getCountOfUnfinishedTasks} />
+          <TasksFilter filterList={changeTaskList} />
+          <CleareCompleted cleareCompletedTasks={deleteCompletedTasks} />
+        </footer>
       </section>
-    );
-  }
+    </section>
+  );
 }
